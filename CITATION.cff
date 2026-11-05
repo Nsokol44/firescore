@@ -1,0 +1,29 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "FireScore: a reusable parcel/structure-level wildfire vulnerability index for any US county"
+abstract: >-
+  FireScore scores every structure in a US county for wildfire vulnerability
+  from free national data (OpenStreetMap, USGS 3DEP, LANDFIRE, FEMA USA
+  Structures, HIFLD), with egress counted on the real road graph, LANDFIRE
+  fuel models, wind-aligned terrain exposure, and structure spacing. One
+  online fetch populates a GeoParquet/GeoTIFF cache; every later run is
+  fully offline. Scores are reported as ranges across weight-sensitivity
+  configurations, and validation against real burn perimeters (permutation
+  null, spatial block cross-validation, calibration, and a head-to-head
+  against Wildfire Risk to Communities) is built in.
+authors:
+  - family-names: Daniels
+    given-names: Katy
+  - family-names: Sokol
+    given-names: Nicholas J.
+    orcid: "https://orcid.org/0000-0002-4798-0056"
+version: 0.1.0
+license: MIT
+repository-code: "https://github.com/Nsokol44/firescore"
+keywords:
+  - wildfire
+  - vulnerability index
+  - wildland-urban interface
+  - egress
+  - GIS
+  - parcel-level risk
