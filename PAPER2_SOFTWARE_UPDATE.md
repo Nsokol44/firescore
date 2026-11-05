@@ -129,36 +129,66 @@ are Paper 2's multi-event validation set** — superseding any
 single-event framing in the draft. The rebuilt software implements this
 in `firescore/events.py` (`firescore validate --nasf … --firesponse …`):
 
-- **Structures-field definition (confirmed by Katy Daniels, Sevier
-  County Fire & Rescue reporting practice, 2026-11-05):** "threatened"
-  is a SOFT, broad category — minor heat damage (e.g. warped siding) on
-  a salvageable structure, through structures simply in the fire path
-  (exposed), damaged or not. "Destroyed" is the hard category: the
-  structure was lost. **The wave-2 manuscript must state this
-  definition.** A reviewer pooling the two fields would be using a
-  materially softer endpoint.
-- **Design rules the software enforces:** DESTROYED is the only damage
-  outcome; THREATENED is reported only as an exposure indicator; no
-  pooled threatened+destroyed figure is ever emitted (a pooled figure
-  from any other tool must be reported alongside the destroyed-only
-  result). Field order in both files is (threatened, destroyed) per
-  FPA-FOD pair — verified against the CT2 record (destroyed 1,373
-  residences + 894 other structures, matching the official after-action
-  counts) and the 2022 Indigo Lane record, on which both files agree
-  (125 residences destroyed).
+- **Structures-field definitions — THREE categories (Katy Daniels
+  correction, 2026-11-05):** the FPA-FOD standard carries THREATENED,
+  DAMAGED, and DESTROYED per structure class. Confirmed by Katy
+  (Sevier County Fire & Rescue reporting practice): "threatened" is a
+  SOFT, broad category — minor heat damage (e.g. warped siding) on a
+  salvageable structure, through structures simply in the fire path
+  (exposed), damaged or not; "destroyed" is the hard category — the
+  structure was lost. **DAMAGED working definition (INFERRED from the
+  FPA-FOD/NWCG standard, NOT confirmed — Katy still needs to confirm
+  the wording):** structures that sustained actual fire damage but
+  were not destroyed — damaged yet standing/repairable, short of the
+  total-loss threshold. **The wave-2 manuscript must state these
+  definitions, with the damaged wording flagged as provisional until
+  Katy confirms it.** A reviewer pooling threatened with either damage
+  category would be using a materially softer endpoint.
+- **Column inventory (re-derived 2026-11-05):** both delivered
+  extracts carry only the (threatened, destroyed) pair per class —
+  the DAMAGED columns are ABSENT (NASF's DBF has no third structures
+  column; fiResponse's apparent extra structures columns are an
+  all-zero join artifact). The module represents damaged explicitly
+  (0, `damaged_carried_in_source = false`) and raises on any future
+  file with a *populated* third structures column, because under DBF
+  truncation the full-triple layout is ambiguous (Residenc_1 would be
+  DAMAGED there, not destroyed) and must be confirmed with the
+  provider rather than guessed.
+- **Design rules the software enforces:** DESTROYED is the primary
+  damage outcome; DAMAGED is a real-damage endpoint, so a
+  damaged-or-destroyed "loss-affected" total is reported ALONGSIDE
+  the destroyed-only result (legitimate because damaged denotes
+  actual damage, unlike threatened); THREATENED is reported only as
+  an exposure indicator and is never pooled with either damage
+  category (a pooled figure from any other tool must be reported
+  alongside the destroyed-only result). The pair order is anchored,
+  not name-guessed: Indigo Lane 2022 — both files give 125 in the
+  second column, and Sevier County's final damage assessment reports
+  exactly 125 structures destroyed (64 residential + 61 overnight
+  rental; 62 damaged, 26 affected) — 125 == 125 pins the column as
+  DESTROYED. CT2 (NASF): 1,373 + 894 = 2,267 vs the official final
+  2,179 destroyed — same endpoint, earlier/looser incident-report
+  basis (+4.0%) — but the residence/other split diverges sharply
+  (1,373/894 vs 2,121/58), so total structures destroyed is the
+  robust endpoint and the split is indicative only.
 - **Anomaly guard:** one fiResponse record reports 20,000 destroyed
   residences on a 5-acre fire — a coding anomaly. It is excluded from
   outcome totals and flagged in the output, never silently used and
   never reinterpreted as threatened.
-- **Harmonised Sevier results (2026-11-05):** 259 raw records → **208
-  events** after cross-source deduplication (NASF precedence) and the
-  anomaly exclusion. **20 events with destroyed structures; 2,686
-  structures destroyed in total** (CT2 alone: 2,267); threatened
+- **Harmonised Sevier results (2026-11-05, three-category mapping):**
+  259 raw records → **208 events** after cross-source deduplication
+  (NASF precedence) and the anomaly exclusion. **20 events with
+  destroyed structures; 2,686 structures destroyed in total** (CT2
+  alone: 2,267); **damaged 0 — the category is not carried in the
+  delivered extracts**, so the loss-affected endpoint (damaged +
+  destroyed) is likewise 20 events / 2,686 structures, equal to
+  destroyed-only by absence of the field, not by merging; threatened
   (exposure) total 1,129. 8 events matched cached perimeters; the rest
   use an area-derived exposure circle, flagged as such. Event-level
   diagnostic, stated plainly: the mean FireScore of exposed structures
   does **not** separate destroyed from non-destroyed events (0.421 vs
-  0.459 — CT2's large low-scoring exposed set dominates), so the
+  0.459 — CT2's large low-scoring exposed set dominates; the
+  loss-affected separation check is identical on this data), so the
   multi-event set's value is that it makes the index testable across
   208 events; it does not rescue a structure-loss claim the perimeter
   analysis already failed. Exposure denominators use current
@@ -260,3 +290,16 @@ and the manuscript's availability/ethics text should say exactly that.
   scoring defects found and fixed during the build (ArcGIS pagination
   cap, osmnx edge schema, HIFLD service retirement, LFPS v2 migration,
   what-if source-swap, validation CRS) with their evidence.
+
+## 6. Canonical repo (2026-11-05)
+
+The canonical home of the software is **Nsokol44/FireHazard**
+(https://github.com/Nsokol44/FireHazard), where the FireScore engine
+lives under `engine/` alongside the Firehouse GIS viewer, so the
+combined tool remains useful in environments without internet: the
+viewer is an offline-first PWA, and the engine runs fully offline
+after a one-time county fetch. The JOSS submission (February 2027)
+is anchored on FireHazard's history, which begins 2026-09-26 (first
+Vercel deployment of the viewer, project "fireview"). The repository
+Nsokol44/firescore remains a working mirror of the engine only; new
+development lands in FireHazard.
