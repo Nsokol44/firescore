@@ -1,0 +1,21 @@
+name: firescore
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - geopandas=1.2.0
+  - osmnx=2.1.1
+  - rasterio=1.5.2
+  - networkx=3.7
+  - numpy=2.5.3
+  - pandas=3.0.6
+  - scipy=1.18.1
+  - scikit-learn=1.9.1
+  - matplotlib=3.11.2
+  - pyyaml=6.0.1
+  - requests=2.34.2
+  - shapely=2.1.2
+  - pyarrow=25.0.1
+  - pyogrio=0.13.0
+  - reportlab=5.1.0
+  - pip
