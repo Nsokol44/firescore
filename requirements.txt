@@ -1,0 +1,16 @@
+# Pinned dependency stack (versions verified installed and used, 2026-11-05)
+geopandas==1.2.0
+matplotlib==3.11.2
+networkx==3.7
+numpy==2.5.3
+osmnx==2.1.1
+pandas==3.0.6
+pyarrow==25.0.1
+pyogrio==0.13.0
+PyYAML==6.0.1
+rasterio==1.5.2
+reportlab==5.1.0
+requests==2.34.2
+scikit-learn==1.9.1
+scipy==1.18.1
+shapely==2.1.2
