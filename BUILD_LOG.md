@@ -257,3 +257,36 @@ except (now imports at module level).
    docs/data_sources.md + docs/validation.md.
 - Tests: 10/10 (3 new events tests: CT2 anchor mapping, anomaly guard
   + dedupe, no-pooling/no-name-leak).
+
+## 2026-11-05 (later) — three-category structures revision
+
+Katy Daniels corrected the structures-field semantics: the FPA-FOD
+standard carries THREE categories (threatened / damaged / destroyed),
+not two. Re-derivation from the delivered files themselves:
+
+- Column inventory: both extracts carry only the (threatened,
+  destroyed) pair per class. NASF's DBF has no third structures
+  column; fiResponse's apparent extra structures columns
+  (Residenc_2/3, OtherStr_2/3) are an all-zero join artifact.
+  DAMAGED is absent from the delivered data — represented in the
+  schema as 0 with damaged_carried_in_source = false, never merged.
+- Anchors: Indigo Lane 2022 — both files' second column = 125 ==
+  Sevier County final assessment's destroyed total exactly (62
+  damaged there, so the column is not damaged). CT2: 2,267 vs
+  official 2,179 destroyed (same endpoint, incident-report basis);
+  residence/other split unreliable (1,373/894 vs 2,121/58).
+- DAMAGED working definition (inferred from the FPA-FOD/NWCG
+  standard, pending Katy's confirmation of the wording): actual fire
+  damage short of destruction (standing/repairable).
+- Design: destroyed primary; loss-affected (damaged + destroyed)
+  reported alongside destroyed-only; threatened exposure-only, never
+  pooled. Loader raises on a populated third structures column
+  (full-triple DBF layout is name-ambiguous) rather than guessing.
+- Sevier recomputation reproduces the two-category numbers exactly
+  (208 events; 20 destroyed events; 2,686 destroyed; 1,129
+  threatened; means 0.4211/0.4595) and adds damaged 0 / not-carried
+  and loss-affected = destroyed by absence.
+- Files: src/firescore/events.py, tests/test_firescore.py (12/12
+  pass; new anchor + layout-guard tests), docs/validation.md,
+  docs/data_sources.md, PAPER2_SOFTWARE_UPDATE.md. Local Sevier
+  outputs (event_table.csv, event_validation.json) regenerated.
