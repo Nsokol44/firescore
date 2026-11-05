@@ -1,0 +1,153 @@
+# FireScore default configuration (config_version 2).
+# Every constant that was hard-coded in the legacy notebook implementation
+# (300 m / 400 m / 5 km clips, class thresholds, component weights) lives here.
+# Counties tune THIS FILE, not the code. Copy it, edit it, and pass it with
+#   firescore run --county "Sevier, TN" --config my_county.yaml
+# The config version is stamped into every output's provenance block.
+
+meta:
+  config_version: 2
+  description: "FireScore v2 defaults: real national inputs, five components."
+
+# ---------------------------------------------------------------- distances
+distances:
+  road_clip_m: 300          # legacy Eq. 1: distance-to-road normaliser
+  station_clip_m: 5000      # legacy Eq. 1: distance-to-station normaliser (now DRIVE distance)
+  hydrant_clip_m: 400       # legacy Eq. 2: distance-to-water normaliser (hydrants)
+  draft_site_clip_m: 1500   # normaliser when water = drafting distance to open water (proxy construct)
+  wildland_clip_m: 500      # distance over which wildland proximity decays to zero
+  cluster_eps_m: 150        # structure-cluster radius (subdivision proxy)
+  cluster_min_samples: 3    # minimum structures to call a cluster
+  cluster_node_radius_m: 150  # road nodes within this of a cluster belong to it
+  spacing_full_risk_m: 9    # structure spacing at/below this is full house-to-house risk
+  spacing_zero_risk_m: 60   # spacing at/above this contributes no spacing risk
+
+# ------------------------------------------------------------------ egress
+egress:
+  exits_reference: 6        # Fong et al. (2026) fatality-risk exit threshold
+  subweights:               # v2 egress sub-composition (sums to 1)
+    exits: 0.35             # outward-exit deficit on the real road graph
+    dead_end: 0.25          # legacy dead-end indicator of nearest node
+    station: 0.25           # drive distance to nearest fire station
+    road_dist: 0.15         # distance from structure to nearest road node
+
+# ------------------------------------------------------ composite & classes
+weights:                    # default composite weights (sums to 1)
+  egress: 0.28
+  water: 0.14
+  vegetation: 0.24
+  terrain: 0.14
+  spacing: 0.20
+
+classes:
+  thresholds: [0.35, 0.55, 0.75]
+  labels: [Low, Moderate, High, Extreme]
+
+# Weight-sensitivity configurations. Every reported score is a RANGE across
+# these configurations (score_low / score_high), never a bare point value.
+sensitivity:
+  default:         {egress: 0.28, water: 0.14, vegetation: 0.24, terrain: 0.14, spacing: 0.20}
+  egress_dominant: {egress: 0.50, water: 0.10, vegetation: 0.15, terrain: 0.10, spacing: 0.15}
+  water_dominant:  {egress: 0.15, water: 0.50, vegetation: 0.12, terrain: 0.08, spacing: 0.15}
+  fuel_dominant:   {egress: 0.15, water: 0.10, vegetation: 0.50, terrain: 0.10, spacing: 0.15}
+  equal:           {egress: 0.20, water: 0.20, vegetation: 0.20, terrain: 0.20, spacing: 0.20}
+
+# ----------------------------------------------------------------- terrain
+terrain:
+  slope_full_deg: 40        # slope at which slope risk saturates (legacy Eq. 4 used /40)
+
+# ------------------------------------------------- wind-aligned exposure
+# Direction the fire-weather wind blows FROM, in degrees (meteorological
+# convention). Default: SSE (157.5 deg), the impinging flow of the 2016
+# Chimney Tops 2 mountain-wave event in the southern Appalachians. Override
+# per county, or import from the Paper 1 catalog when available
+# (firescore run --wind-from-deg ...).
+wind:
+  downslope_from_deg: 157.5
+
+# ------------------------------------------------------------- fuels (v2)
+# Hazard lookup for LANDFIRE FBFM40 (Anderson 1982 / Scott & Burgan 40)
+# fuel-model codes as stored in the LANDFIRE raster. 0..1, higher = worse.
+# These are ordinal design values, documented as such; tune locally.
+fuels:
+  hazard_by_code:
+    101: 0.45  # GR1
+    102: 0.55  # GR2
+    103: 0.60  # GR3
+    104: 0.70  # GR4
+    105: 0.75  # GR5
+    106: 0.70  # GR6
+    107: 0.85  # GR7
+    108: 0.80  # GR8
+    109: 0.75  # GR9
+    121: 0.55  # GS1
+    122: 0.70  # GS2
+    123: 0.75  # GS3
+    124: 0.85  # GS4
+    141: 0.50  # SH1
+    142: 0.70  # SH2
+    143: 0.65  # SH3
+    144: 0.60  # SH4
+    145: 0.90  # SH5
+    146: 0.70  # SH6
+    147: 0.95  # SH7
+    148: 0.75  # SH8
+    149: 0.80  # SH9
+    161: 0.35  # TU1
+    162: 0.50  # TU2
+    163: 0.60  # TU3
+    164: 0.55  # TU4
+    165: 0.70  # TU5
+    181: 0.30  # TL1
+    182: 0.35  # TL2
+    183: 0.40  # TL3
+    184: 0.45  # TL4
+    185: 0.55  # TL5
+    186: 0.50  # TL6
+    187: 0.45  # TL7
+    188: 0.50  # TL8
+    189: 0.60  # TL9
+    201: 0.60  # SB1
+    202: 0.70  # SB2
+    203: 0.80  # SB3
+    204: 0.85  # SB4
+    91: 0.05   # NB1 urban
+    92: 0.00   # NB2 snow/ice
+    93: 0.05   # NB3 agriculture
+    94: 0.00   # NB4 (unused)
+    95: 0.00   # NB5 (unused)
+    96: 0.00   # NB6 (unused)
+    97: 0.00   # NB7 (unused)
+    98: 0.00   # NB8 water
+    99: 0.10   # NB9 barren/rock
+  default_hazard: 0.40      # unknown / nodata codes
+  wildland_min_patch_ha: 1.0  # "wildland" = contiguous burnable patch at least this large
+  nonburnable_max_code: 99  # codes <= this with hazard <= 0.10 count as non-wildland
+  vegetation_mix:
+    fuel_hazard: 0.70       # weight on FBFM40 hazard at/near the structure
+    wildland_proximity: 0.30  # weight on distance-to-wildland decay
+  fuel_sample_radius_m: 45  # neighbourhood radius for modal fuel model
+
+# -------------------------------------------------------------------- what-if
+whatif:
+  cleared_fuel_hazard: 0.08     # vegetation hazard after defensible-space clearing
+  costs_usd:                    # planning-level defaults; tune per county
+    clear_veg_per_structure: 1500
+    hydrant_installed: 6500
+    second_road_per_m: 450
+    road_egress_fixed: 25000    # permitting/design fixed cost of a new exit link
+
+# --------------------------------------------------------------- validation
+validation:
+  block_size_m: 1000            # spatial block size for block cross-validation
+  cv_folds: 5
+  permutation_draws: 500
+  seed: 2026
+
+# -------------------------------------------------------------------- fetch
+fetch:
+  landfire_product: "LF2023_FBFM40"   # LFPS v2 Layer_List token
+  landfire_email: "nsokol@utk.edu"    # LFPS v2 requires an email (usage statistics only); set your own
+  dem_resolution_m: 30
+  wrc_service: "USFS_EDW_RMRS_WRC_BurnProbability"
+  overpass_timeout_s: 300
