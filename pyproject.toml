@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "firescore"
+version = "0.1.0"
+description = "FireScore: a reusable, open-source parcel/structure-level wildfire vulnerability index that runs on any US county from free national data, online once and offline thereafter."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [
+    { name = "Katy Daniels" },
+    { name = "Nicholas J. Sokol" },
+]
+requires-python = ">=3.10"
+dependencies = [
+    "geopandas>=1.0",
+    "networkx>=3.2",
+    "numpy>=1.26",
+    "osmnx>=2.0",
+    "pandas>=2.1",
+    "pyyaml>=6.0",
+    "rasterio>=1.3",
+    "reportlab>=4.0",
+    "requests>=2.31",
+    "scikit-learn>=1.4",
+    "scipy>=1.12",
+    "shapely>=2.0",
+    "matplotlib>=3.8",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "nbformat>=5.9"]
+
+[project.scripts]
+firescore = "firescore.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+firescore = ["config/*.yaml", "assets/fireview/*"]
