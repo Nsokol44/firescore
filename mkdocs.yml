@@ -1,0 +1,18 @@
+site_name: FireScore
+site_description: Parcel/structure-level wildfire vulnerability scoring for any US county, from free national data, offline after one fetch.
+repo_url: https://github.com/Nsokol44/firescore
+theme:
+  name: mkdocs
+nav:
+  - Home: index.md
+  - Quickstart: quickstart.md
+  - The offline workflow: offline.md
+  - Configuration: configuration.md
+  - The index: index_method.md
+  - Validation: validation.md
+  - What-if editor: whatif.md
+  - Practitioner outputs: outputs.md
+  - Data sources: data_sources.md
+markdown_extensions:
+  - tables
+  - fenced_code
