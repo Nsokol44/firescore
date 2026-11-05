@@ -1,0 +1,23 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install (pinned stack)
+        run: |
+          pip install -r requirements.txt
+          pip install -e . pytest
+      - name: Run offline test suite
+        run: pytest -q
+        # The suite is fully offline: it builds a synthetic mini-county and
+        # never touches OSM/Census/USGS. Live-county runs are documented in
+        # the example notebook, not in CI.
