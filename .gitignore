@@ -1,0 +1,16 @@
+# caches and run outputs (data provenance is documented; the data itself is re-fetchable)
+projects/
+*.parquet
+!tests/**/*.parquet
+cache/
+outputs/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+osmnx_cache/
+dist/
+build/
+*.egg-info/
+
+# analyst inventory scratch (provenance notes live in BUILD_LOG.md)
+inventory/
