@@ -33,9 +33,15 @@ manuscript text, the files govern.**
 | NIFC / IRWIN points, 2016–2025 | 106 | Cross-check (CT2 acreage: 17,140 ac vs NASF's 17,010 — NASF governs the Paper 2 set) |
 | Sevier County EMA CAD brush-fire calls, 2020–2025 | 763 | **Not ingested by FireScore** — see the privacy rule below |
 
-Structures-field definitions for the validation files (threatened =
-soft exposure category; destroyed = structure lost) are documented in
-[Validation](validation.md), credited to the data provider's practice.
+Structures-field definitions for the validation files are documented
+in [Validation](validation.md): the FPA-FOD standard carries three
+categories (threatened = soft exposure category; damaged = real
+damage short of destruction, working definition inferred and pending
+the provider's confirmation; destroyed = structure lost). Both
+delivered extracts carry only the (threatened, destroyed) pair — the
+damaged columns are absent (the fiResponse file's extra structures
+columns are an empty join artifact) — credited to the data provider's
+practice and verified against the county's final damage assessments.
 
 ## Privacy — what never gets published
 
