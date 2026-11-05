@@ -178,7 +178,11 @@ def _fake_fpa_fod(path, rows):
 
 def test_events_destroyed_is_the_outcome(tmp_path):
     """Field semantics anchored on the real Chimney Tops 2 record:
-    (threatened, destroyed) pair order; destroyed = 1,373 + 894."""
+    (threatened, destroyed) pair order; destroyed = 1,373 + 894 = 2,267
+    (the incident-report basis of the official 2,179 destroyed; the
+    county's Indigo Lane assessment pins Residenc_1 = DESTROYED exactly
+    - see test_events_three_way_mapping_anchors). DAMAGED is a distinct
+    third category that the delivered extracts do not carry."""
     from firescore.events import load_events
 
     row = {"LocalIncid": "16-E0573", "FireDiscov": "2016-11-28", "IncidentNa": "CHIMNEY TOPS 2",
@@ -189,6 +193,83 @@ def test_events_destroyed_is_the_outcome(tmp_path):
     assert flags == []
     assert ev.iloc[0]["structures_destroyed"] == 2267
     assert ev.iloc[0]["structures_threatened"] == 0
+    # Three-category schema: damaged present as a category, 0 and
+    # flagged not-carried for the delivered extracts; loss-affected
+    # (damaged + destroyed) equals destroyed-only by absence.
+    assert ev.iloc[0]["structures_damaged"] == 0
+    assert ev.iloc[0]["structures_loss_affected"] == 2267
+    assert not bool(ev.iloc[0]["damaged_carried_in_source"])
+
+
+def test_events_three_way_mapping_anchors(tmp_path):
+    """Pin the three-way (threatened / damaged / destroyed) mapping on
+    the two anchor events with independent final assessments.
+
+    Indigo Lane / Hatcher Mountain, 2022-03-30: both delivered files
+    give Residenc_1 = 125, every other structures field 0. Sevier
+    County's final damage assessment for that fire reports exactly
+    125 structures DESTROYED (64 residential + 61 overnight rental),
+    62 damaged (4 major + 58 minor), 26 affected. Residenc_1 = 125 ==
+    the destroyed total (as DAMAGED it would read ~62), which pins the
+    second column as DESTROYED in both systems. CT2 pins the totals
+    basis: 1,373 + 894 = 2,267 vs the official 2,179 destroyed.
+    DAMAGED is carried by neither extract, so it reads 0/not-carried
+    and the loss-affected endpoint equals destroyed-only by absence.
+    """
+    from firescore.events import destroyed_only_summary, event_table, load_events
+
+    base = {"Statistica": 5, "Residences": 0, "Residenc_1": 0, "OtherStruc": 0,
+            "OtherStr_1": 0, "NumberInju": 0, "NumberFata": 0, "FinalFireA": 5.0}
+    ct2 = dict(base, LocalIncid="16-E0573", FireDiscov="2016-11-28",
+               IncidentNa="CHIMNEY TOPS 2", Residenc_1=1373, OtherStr_1=894,
+               NumberFata=14, FinalFireA=17010.0)
+    indigo_nasf = dict(base, LocalIncid="22-E0001", FireDiscov="2022-03-30",
+                       IncidentNa="INDIGO LANE", Residenc_1=125, FinalFireA=2498.0)
+    indigo_fres = dict(indigo_nasf, LocalIncid="22-T0002")
+    ev, flags = load_events(
+        nasf_path=str(_fake_fpa_fod(tmp_path / "n.shp", [ct2, indigo_nasf])),
+        firesponse_path=str(_fake_fpa_fod(tmp_path / "f.shp", [indigo_fres])))
+    assert flags == []
+    assert len(ev) == 2  # the Indigo duplicate dedupes; NASF wins
+    by_year = {int(r["discovery"].year): r for _, r in ev.iterrows()}
+    assert by_year[2016]["structures_destroyed"] == 2267
+    assert by_year[2022]["structures_destroyed"] == 125
+    for _, r in ev.iterrows():
+        assert r["structures_damaged"] == 0
+        assert r["structures_loss_affected"] == r["structures_destroyed"]
+        assert not bool(r["damaged_carried_in_source"])
+
+    scored = gpd.GeoDataFrame(
+        {"score": [0.4]},
+        geometry=[Polygon([(-83.56, 35.70), (-83.54, 35.70), (-83.54, 35.72),
+                           (-83.56, 35.72), (-83.56, 35.70)])],
+        crs="EPSG:4326")
+    s = destroyed_only_summary(event_table(scored, ev))
+    assert s["structures_destroyed_total"] == 2392
+    assert s["structures_damaged_total"] == 0
+    assert s["damaged_carried_in_source"] is False
+    assert s["structures_loss_affected_total"] == 2392
+    assert s["events_with_loss_affected"] == 2
+
+
+def test_events_populated_third_column_raises(tmp_path):
+    """A POPULATED third structures column means a full-triple layout
+    whose DBF names are ambiguous (Residenc_1 would be DAMAGED there,
+    not destroyed). The loader must refuse to guess. An all-zero third
+    column (the delivered fiResponse join artifact) is ignored."""
+    from firescore.events import load_events
+
+    row = {"LocalIncid": "X1", "FireDiscov": "2022-03-30", "IncidentNa": "TEST",
+           "Statistica": 5, "Residences": 0, "Residenc_1": 125, "Residenc_2": 62,
+           "OtherStruc": 0, "OtherStr_1": 0, "NumberInju": 0, "NumberFata": 0,
+           "FinalFireA": 5.0}
+    p = _fake_fpa_fod(tmp_path / "t.shp", [row])
+    with pytest.raises(ValueError, match="three-column"):
+        load_events(nasf_path=str(p))
+    row_zero = dict(row, Residenc_2=0)
+    p2 = _fake_fpa_fod(tmp_path / "t2.shp", [row_zero])
+    ev, _ = load_events(nasf_path=str(p2))
+    assert ev.iloc[0]["structures_destroyed"] == 125
 
 
 def test_events_anomaly_guard_and_dedupe(tmp_path):
@@ -227,3 +308,11 @@ def test_event_table_never_pools_or_leaks_names(tmp_path):
     s = destroyed_only_summary(table)
     assert s["structures_destroyed_total"] == 2
     assert not any("impacted" in k or "pooled" in k for k in s)
+    # Three-category summary: damaged is its own endpoint (0 here -
+    # not carried in the delivered extracts), loss-affected is
+    # damaged + destroyed, and threatened stays exposure-only.
+    assert table.iloc[0]["structures_damaged"] == 0
+    assert table.iloc[0]["structures_loss_affected_outcome"] == 2
+    assert s["structures_damaged_total"] == 0
+    assert s["structures_loss_affected_total"] == 2
+    assert s["structures_threatened_exposure_total"] == 10
