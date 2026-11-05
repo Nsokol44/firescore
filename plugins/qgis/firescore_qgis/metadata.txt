@@ -1,0 +1,12 @@
+name=FireScore
+qgisMinimumVersion=3.34
+description=Run FireScore parcel/structure wildfire vulnerability scoring for a US county from inside QGIS. Loads a FireScore project, scores it from the local cache (offline after one fetch), and opens the scored layer plus the what-if workflow.
+version=0.1.0
+author=Katy Daniels, Nicholas J. Sokol
+email=nsokol@utk.edu
+category=Plugins
+tags=wildfire, vulnerability, egress, fire, parcels
+homepage=https://github.com/Nsokol44/firescore
+experimental=False
+deprecated=False
+icon=icon.png
